@@ -8,5 +8,19 @@
     "description": "Claude Code skills and plugins by hebstr.",
     "version": "0.1.0"
   },
-  "plugins": []
+  "plugins": [
+    {
+      "name": "review",
+      "description": "Skills for code, skill, and MCP review workflows — orchestrated walkthroughs, full-project audits, adversarial critique, and circularity-aware cross-model review.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./review/review-walkthrough",
+        "./review/full-review",
+        "./review/blindspot-review",
+        "./review/skill-adversary",
+        "./review/mcp-adversary"
+      ]
+    }
+  ]
 }
