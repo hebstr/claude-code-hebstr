@@ -1,0 +1,26 @@
+# Changelog
+
+## [0.1.0] - 2026-04-26
+
+Initial public release.
+
+### `review` 0.1.0
+
+#### Added
+- Plugin scaffolding with 5 skills bundled.
+- `review-walkthrough` — interactive, point-by-point walkthrough of a review report. Orchestrator mode (target + reviewer) and walkthrough-only mode (existing report). Re-evaluates findings, proposes fixes, checks impacted files for regressions.
+- `full-review` — full-coverage project review with parallel specialist agents (architecture, quality, tests, docs), consolidated deduplicated report sorted by severity.
+- `blindspot-review` — circularity-aware orchestrator. Detects when a reviewer shares its target's codebase, prompts, or model family, then injects cross-model judging via OpenRouter and convergence analysis. Explicit-invocation only.
+- `skill-adversary` — adversarial critic for Claude Code skills. Reports trigger edge cases, instruction ambiguities, contradictions, cross-file coherence issues, and gaps.
+- `mcp-adversary` — adversarial critic for MCP servers. Reports inter-tool discrimination issues, schema anti-patterns, semantic drift, error handling inconsistencies, and undocumented workflow dependencies.
+
+#### Security
+- `skill-adversary` and `mcp-adversary` switched from content-embedded sub-agent prompts to a path-based contract: sub-agents receive absolute paths and `Read` files themselves. Removes prompt-injection surface via closing tags (`</skill>`, `</server>`) and context-bleed via prompt negation. Validated cross-model on 2026-04-25.
+
+### `workflow` 0.1.0
+
+#### Added
+- Plugin scaffolding with 1 skill bundled.
+- `sync-files` — scan files for staleness relative to recent changes and propose targeted updates. `--deep` mode runs cross-repo semantic consistency scan with parallel agents. User-invocable only.
+
+[0.1.0]: https://github.com/hebstr/claude-code-hebstr/releases/tag/v0.1.0
