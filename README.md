@@ -32,7 +32,7 @@ Project workflow automation — file consistency sweeps and cross-repo synchroni
 
 | Skill | Purpose |
 |---|---|
-| [`sync-files`](./workflow/sync-files/) | Scan all files, identify ones that are stale relative to recent changes, and update them. `--deep` mode runs a cross-repo semantic consistency scan with parallel agents |
+| [`sync`](./workflow/sync/) | Scan all files, identify ones that are stale relative to recent changes, and update them. Always runs a cross-repo semantic consistency scan with parallel agents |
 
 ## Requirements
 

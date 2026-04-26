@@ -29,7 +29,7 @@
       "source": "./",
       "strict": false,
       "skills": [
-        "./workflow/sync-files"
+        "./workflow/sync"
       ]
     }
   ]

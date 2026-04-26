@@ -1,22 +1,12 @@
 ---
-name: sync-files
-description: >
-  Scan all files in the current directory and subdirectories, identify files that are stale relative to recent changes, and update them.
-  Use --deep for cross-repo semantic consistency scan with parallel agents.
-  User-invocable only via /sync-files or /sync-files --deep.
+name: sync
+description: Scan all files in the current directory and subdirectories, identify files that are stale relative to recent changes, and update them. Always performs a cross-repo semantic consistency scan with parallel agents. User-invocable only via /sync.
 allowed-tools: Read Write Edit Glob Grep Agent
 ---
 
-# Sync Files
+# Sync
 
-Scan all files in the current working directory (recursively), identify files that are stale relative to uncommitted changes (staged + unstaged), and update them.
-
-## Modes
-
-- **Default** (`/sync-files`): fast surface scan — cross-references, descriptions, outdated pointers. Executed by the main model in default mode, no agents.
-- **Deep** (`/sync-files --deep`): comprehensive cross-repo semantic consistency scan. Spawns parallel agents per component to check internal consistency (allowed-tools vs body, step ordering, import chains, tool registration, naming). Fixes issues found. Use after large multi-repo changes.
-
-**Steps 1–5 run in both modes. Step 6 runs only in `--deep` mode.**
+Scan all files in the current working directory (recursively), identify files that are stale relative to uncommitted changes (staged + unstaged), and update them. Always includes a cross-repo semantic consistency scan with parallel agents.
 
 ## Context (injected at invocation)
 
@@ -90,11 +80,9 @@ Updated N files:
 - agents/foo.md: fixed reference to Z
 ```
 
-If no files are stale, say so. Then proceed to Step 6 if in `--deep` mode, otherwise stop.
+If no files are stale, say so. Then proceed to Step 6.
 
-### Step 6 — Deep consistency scan (`--deep` only)
-
-Skip this step entirely unless the user invoked `/sync-files --deep`.
+### Step 6 — Deep consistency scan
 
 This step goes beyond surface-level cross-references. It checks semantic consistency across related repositories and within files — things that grep-based checks miss.
 

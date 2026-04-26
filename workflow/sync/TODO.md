@@ -1,4 +1,4 @@
-# TODO — sync-files
+# TODO — sync
 
 ## Phase 1 — Field validation
 

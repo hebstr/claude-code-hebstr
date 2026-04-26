@@ -11,6 +11,11 @@
 #### Removed
 - `litrev` plugin reverted to standalone repo (`github.com:hebstr/litrev`). Migration into the `hebstr` marketplace was never validated runtime; rolled back to keep stacks (markdown skills vs Python MCP) and audiences (Claude Code devs vs medical researchers) separated.
 
+### `workflow`
+
+#### Changed
+- `sync-files` renamed to `sync`. Cross-repo semantic consistency scan with parallel agents (formerly opt-in via `--deep`) is now the default and only mode; `--deep` flag removed. Invocation is now `/sync`.
+
 ## [0.1.0] - 2026-04-26
 
 Initial public release.
