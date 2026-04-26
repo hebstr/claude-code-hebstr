@@ -66,7 +66,7 @@ Search for a `feedback_review_severity.md` file in the current project's memory 
 
 #### Report to user
 
-Report the detected type, size category, LOC count, number of agents to launch, whether calibration memory was found, and which skill dependencies are available (check the skill list). Always check `/critical-code-reviewer` (Agent A). For R package projects, also check `/testing-r-packages`, `/r-package-development` (Agent C), and `/cran-extrachecks` (Agent D). Report availability of each before proceeding.
+Report the detected type, size category, LOC count, number of agents to launch, whether calibration memory was found, and which skill dependencies are available (check the skill list). Always check `/critical-code-reviewer` (Agent A) and `/review-walkthrough` (Phase 4). For R package projects, also check `/testing-r-packages`, `/r-package-development` (Agent C), and `/cran-extrachecks` (Agent D). Report availability of each before proceeding.
 
 ### Phase 1 — Launch agents
 

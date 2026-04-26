@@ -46,9 +46,10 @@ skill-adversary/
 ├── SKILL.md
 └── agents/
     ├── trigger-attacker.md   ← false positives / false negatives
-    ├── instruction-critic.md ← ambiguities in the SKILL.md
-    └── output-fuzzer.md      ← output degradation
+    └── instruction-critic.md ← ambiguities in the SKILL.md
 ```
+
+`output-fuzzer.md` is planned for V2 (see `doc/v2.md`) — it would handle the third axis (output degradation) below.
 
 ---
 

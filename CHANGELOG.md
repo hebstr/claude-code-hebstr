@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### `review`
+
+#### Changed
+- `full-review` — pre-launch availability report now also checks `/review-walkthrough` (Phase 4 dependency), in addition to `/critical-code-reviewer` and the R-package skills.
+- `skill-adversary` — `output-fuzzer` sub-agent deferred to V2; context doc updated to reflect the two-agent layout (`trigger-attacker`, `instruction-critic`) and point to `doc/v2.md` for the third axis.
+
 #### Removed
 - `litrev` plugin reverted to standalone repo (`github.com:hebstr/litrev`). Migration into the `hebstr` marketplace was never validated runtime; rolled back to keep stacks (markdown skills vs Python MCP) and audiences (Claude Code devs vs medical researchers) separated.
 
