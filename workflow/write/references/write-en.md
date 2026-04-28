@@ -4,7 +4,7 @@ Eliminate predictable AI writing patterns. Write like a human: varied, imperfect
 
 ### Core Rules
 
-1. **Cut filler phrases.** Remove throat-clearing openers, emphasis crutches, and all adverbs.
+1. **Cut filler phrases.** Remove throat-clearing openers, emphasis crutches, and empty intensifier adverbs (see Word Choice below). Adverbs that carry meaning (manner, time, degree of an action) stay — meaning first, style second.
 2. **Break formulaic structures.** Avoid binary contrasts, negative listings, dramatic fragmentation, rhetorical setups, false agency.
 3. **Use active voice.** Every sentence needs a human subject doing something. No inanimate objects performing human actions ("the complaint becomes a fix").
 4. **Be specific.** No vague declaratives ("The reasons are structural"). Name the specific thing. No lazy extremes ("every," "always," "never") doing vague work.
@@ -164,7 +164,7 @@ Examples, not exhaustive -- any construction that performs insight rather than d
 
 ### Quick Checks Before Delivering Prose
 
-- Any adverbs? Kill them.
+- Any empty intensifier adverb (from the list above)? Kill it. Meaning-bearing adverbs stay.
 - Any passive voice? Find the actor, make them the subject.
 - Inanimate thing doing a human verb? Name the person.
 - Sentence starts with "Here's"? Cut to the point.

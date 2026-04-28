@@ -19,7 +19,7 @@ claude plugin install workflow@hebstr
 
 `/workflow:sync` performs a single-repo sweep (drift between recently changed files and the rest of the tree — counts, references, doc tables, permission/config gates) followed by a cross-repo semantic scan (parallel agents check consistency between sibling repos sharing concepts: shared docs, shared manifests, mirrored APIs).
 
-`/workflow:write` runs only when the user explicitly types `/workflow:write` — it does not auto-trigger on mentions of "draft", "polish", "rewrite", "relis", "corrige", etc. It detects the source language from the text itself, loads the matching reference (`references/write-fr.md` or `references/write-en.md`), and edits in place without commentary. Bilingual review mode kicks in for FR↔EN parity work (release notes, mixed-language docs).
+`/workflow:write` runs only when the user explicitly types `/workflow:write` — it does not auto-trigger on mentions of "draft", "polish", "rewrite", "relis", "corrige", etc. It detects the source language from the text itself and loads the matching reference (`references/write-fr-core.md` for French, `references/write-en.md` for English), then edits in place without commentary. The French reference is split: a register-neutral core (~230 lines, always loaded) plus an exhaustive extended (`references/write-fr-extended.md`, ~680 lines) loaded only for bilingual reviews, deep passes, or edge cases. Bilingual review mode kicks in for FR↔EN parity work (release notes, mixed-language docs).
 
 User-invocable only — neither skill auto-triggers.
 

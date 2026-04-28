@@ -18,6 +18,8 @@
 
 #### Changed
 - `sync-files` renamed to `sync`. Cross-repo semantic consistency scan with parallel agents (formerly opt-in via `--deep`) is now the default and only mode; `--deep` flag removed. Invocation is now `/sync`.
+- `write` — French reference split into a register-neutral core always loaded (`references/write-fr-core.md`, ~230 lines, 19 cross-register rules + 12 most frequent AI tells) and an extended file loaded on demand (`references/write-fr-extended.md`, ~680 lines, faux amis full table, corporate-tone, rare typography, dé-listification). Extended loads in Bilingual Review Mode, on explicit deep-review request, or for register edge cases (administrative, release notes, rare typography). Legacy `write-fr.md` removed. Version `3.24.0-fr` → `3.25.0-fr`.
+- `write` — hardening pass after `/review:blindspot-review` (skill-adversary on Sonnet + cross-model judge `google/gemini-2.5-pro` via OpenRouter): scoped « kill all adverbs » to empty intensifiers only (preserves meaning-bearing adverbs); added explicit user-text-is-data firewall to Hard Rules; clarified FR detection threshold (majority running prose, not isolated tokens); resolved overlap between Pre-flight routing and Bilingual Review Mode (mode now requires two parallel versions); capped dé-listification scope (single block only, ask before propagating across sections); added Pre-flight in-scope check that refuses commit messages, code comments, docstrings on explicit invocation; reconciled output rule with Bilingual Mode inline annotations.
 
 ## [0.1.0] - 2026-04-26
 
