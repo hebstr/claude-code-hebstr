@@ -1,5 +1,6 @@
 ---
 name: blindspot-review
+disable-model-invocation: true
 description: >
   Circularity-aware orchestrator for audit skills. Detects when an audit skill (skill-adversary,
   mcp-adversary, full-review, critical-code-reviewer) is about to review an artifact that shares

@@ -1,6 +1,5 @@
 ---
 name: skill-adversary
-context: main
 description: >
   Adversarial critic for Claude Code skills. Reviews a skill's full directory
   (SKILL.md, agents, docs, templates) and produces a structured report of flaws:

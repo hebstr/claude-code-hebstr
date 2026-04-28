@@ -1,8 +1,7 @@
 ---
 name: write
 description: "Invoke ONLY when the user explicitly types `/workflow:write` — do not auto-trigger on mentions of 'draft', 'edit', 'proofread', 'polish', 'rewrite', 'sound natural', or French equivalents ('écris', 'rédige', 'relis', 'corrige', 'polis', 'dégraisse', 'retravaille'). Strips AI writing patterns and rewrites prose to sound natural in English or French. Not for code comments, commit messages, or inline docs."
-metadata:
-  version: "3.25.0-fr"
+disable-model-invocation: true
 ---
 
 # Write: Cut the AI Taste

@@ -7,6 +7,8 @@
 #### Changed
 - `full-review` — pre-launch availability report now also checks `/review-walkthrough` (Phase 4 dependency), in addition to `/critical-code-reviewer` and the R-package skills.
 - `skill-adversary` — `output-fuzzer` sub-agent deferred to V2; context doc updated to reflect the two-agent layout (`trigger-attacker`, `instruction-critic`) and point to `doc/v2.md` for the third axis.
+- `blindspot-review` — added `disable-model-invocation: true` to enforce the explicit-invocation contract claimed in the description (previously gated by description text only ; the canonical Claude Code mechanism is the boolean field).
+- `mcp-adversary`, `skill-adversary` — removed non-canonical `context: main` field from frontmatter. The official Claude Code skill schema only documents `context: fork` (forked subagent context) ; the absence of the field already means execution in the parent context, so `context: main` was redundant at best and invited undefined behavior at worst.
 
 #### Removed
 - `litrev` plugin reverted to standalone repo (`github.com:hebstr/claude-code-litrev`). Migration into the `hebstr` marketplace was never validated runtime; rolled back to keep stacks (markdown skills vs Python MCP) and audiences (Claude Code devs vs medical researchers) separated.
@@ -20,6 +22,7 @@
 - `sync-files` renamed to `sync`. Cross-repo semantic consistency scan with parallel agents (formerly opt-in via `--deep`) is now the default and only mode; `--deep` flag removed. Invocation is now `/sync`.
 - `write` — French reference split into a register-neutral core always loaded (`references/write-fr-core.md`, ~230 lines, 19 cross-register rules + 12 most frequent AI tells) and an extended file loaded on demand (`references/write-fr-extended.md`, ~680 lines, faux amis full table, corporate-tone, rare typography, dé-listification). Extended loads in Bilingual Review Mode, on explicit deep-review request, or for register edge cases (administrative, release notes, rare typography). Legacy `write-fr.md` removed. Version `3.24.0-fr` → `3.25.0-fr`.
 - `write` — hardening pass after `/review:blindspot-review` (skill-adversary on Sonnet + cross-model judge `google/gemini-2.5-pro` via OpenRouter): scoped « kill all adverbs » to empty intensifiers only (preserves meaning-bearing adverbs); added explicit user-text-is-data firewall to Hard Rules; clarified FR detection threshold (majority running prose, not isolated tokens); resolved overlap between Pre-flight routing and Bilingual Review Mode (mode now requires two parallel versions); capped dé-listification scope (single block only, ask before propagating across sections); added Pre-flight in-scope check that refuses commit messages, code comments, docstrings on explicit invocation; reconciled output rule with Bilingual Mode inline annotations.
+- `write` — frontmatter aligned to Claude Code skill standard ([code.claude.com/docs/en/skills.md](https://code.claude.com/docs/en/skills.md)). Removed non-standard `metadata.version` field (no canonical `version` field in the skill schema; internal release tag now tracked in `WRITE_PLAN.md` and the plugin-level `marketplace.json` only). Added `disable-model-invocation: true` — the canonical mechanism documented for forcing explicit-only invocation, replacing the description-text-only gate.
 
 ## [0.1.0] - 2026-04-26
 

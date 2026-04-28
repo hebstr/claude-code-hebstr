@@ -1,6 +1,5 @@
 ---
 name: mcp-adversary
-context: main
 description: >
   Adversarial critic for MCP servers. Reviews an MCP server's tool descriptions,
   parameter schemas, and implementation code to find flaws: inter-tool discrimination
