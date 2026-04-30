@@ -1,6 +1,7 @@
 ---
 name: blindspot
 disable-model-invocation: true
+allowed-tools: Read Glob Grep Bash Agent Skill
 description: >
   Circularity-aware orchestrator for audit skills. Detects when an audit skill (skill-adversary,
   mcp-adversary, sweep, critical-code-reviewer) is about to review an artifact that shares
