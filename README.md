@@ -1,5 +1,8 @@
 # Claude Code plugins
 
+![CI](https://github.com/hebstr/claude-code-plugins/actions/workflows/ci.yml/badge.svg)
+![Release](https://img.shields.io/github/v/release/hebstr/claude-code-plugins)
+
 Skills extend Claude Code with specialized workflows that activate automatically based on the task. Learn more at the [Claude Skills documentation](https://support.claude.com/en/articles/12512180-using-skills-in-claude).
 
 ## Install
