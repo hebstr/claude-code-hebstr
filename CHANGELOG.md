@@ -49,6 +49,7 @@ Initial public release.
 #### Added
 - `sync-files`: scan files for staleness relative to recent changes and propose targeted updates. `--deep` mode runs cross-repo semantic consistency scan with parallel agents. User-invocable only.
 
+[0.4.0]: https://github.com/hebstr/claude-code-plugins/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/hebstr/claude-code-plugins/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/hebstr/claude-code-plugins/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/hebstr/claude-code-plugins/releases/tag/v0.1.0
