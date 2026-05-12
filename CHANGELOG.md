@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.0] - 2026-05-12
+
+### `workflow`
+
+#### Added
+
+- `reco`: deep-mode recommendation backed by external sources. Spawns two parallel agents (official documentation via WebFetch, community practice via WebSearch), then synthesizes a structured recommendation with verified citations (my take, tradeoffs, official docs, community, final recommendation). URLs are verified before citing; source disagreement is surfaced, not papered over. Light-mode recommendations (always recommend when presenting choices) live in CLAUDE.md as a communication rule, not in this skill. Explicit-invocation only (`/workflow:reco`).
+
 ## [0.3.0] - 2026-04-30
 
 ### `workflow`
