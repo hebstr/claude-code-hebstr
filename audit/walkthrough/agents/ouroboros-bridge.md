@@ -70,16 +70,16 @@ Baseline: all walkthrough features require ≥ `MIN_OUROBOROS`. There is no per-
 
 | `mcp_up` | `fs_versions` | `version_class` | `available` | `version` | Anomalies |
 |---|---|---|---|---|---|
-| true | empty, no `fs_error` | — | true | null | `warn`: "Cache Ouroboros introuvable sous `CACHE_DIR`. Version inconnue, compatibilité non vérifiée." |
-| true | empty, with `fs_error` | — | true | null | `warn`: "Échec lecture cache Ouroboros : `{fs_error}`. Version non vérifiée." |
-| true | non-empty | `unparsable` | true | `{fs_version}` | `warn`: "Version Ouroboros « `{fs_version}` » non parsable comme SemVer. Compatibilité inconnue, procède sans garantie." |
-| true | non-empty | `below_min` | false | `{fs_version}` | `error`: "Ouroboros `{fs_version}` < minimum requis `{MIN_OUROBOROS}`. Mets à jour le plugin ou utilise `/walkthrough` sans Ouroboros." |
-| true | non-empty | `above_tested` | true | `{fs_version}` | `warn`: "Ouroboros `{fs_version}` > version testée `{MAX_TESTED}`. Procède, peut diverger." |
+| true | empty, no `fs_error` | — | true | null | `warn`: "Ouroboros cache not found under `CACHE_DIR`. Version unknown, compatibility unverified." |
+| true | empty, with `fs_error` | — | true | null | `warn`: "Failed to read Ouroboros cache: `{fs_error}`. Version unverified." |
+| true | non-empty | `unparsable` | true | `{fs_version}` | `warn`: "Ouroboros version `{fs_version}` is not parsable as SemVer. Compatibility unknown, proceeding without guarantee." |
+| true | non-empty | `below_min` | false | `{fs_version}` | `error`: "Ouroboros `{fs_version}` < minimum required `{MIN_OUROBOROS}`. Update the plugin or run `/walkthrough` without Ouroboros." |
+| true | non-empty | `above_tested` | true | `{fs_version}` | `warn`: "Ouroboros `{fs_version}` > last tested `{MAX_TESTED}`. Proceeding, behavior may diverge." |
 | true | non-empty | `supported` | true | `{fs_version}` | — |
-| false | non-empty | any | false | `{fs_version}` | `error`: "Cache Ouroboros présent (`{fs_version}`) mais serveur MCP indisponible (`{mcp_error}`). Vérifie l'installation ou redémarre Claude Code." |
+| false | non-empty | any | false | `{fs_version}` | `error`: "Ouroboros cache present (`{fs_version}`) but MCP server unavailable (`{mcp_error}`). Check the installation or restart Claude Code." |
 | false | empty | — | false | null | — (Ouroboros simply not installed — standard case, no anomaly.) |
 
-In addition to the row's anomalies, if `fs_versions` has length ≥ 2, append an `info` anomaly: "Versions Ouroboros installées : `{list}`. Utilise `{fs_version}` (la plus haute)."
+In addition to the row's anomalies, if `fs_versions` has length ≥ 2, append an `info` anomaly: "Ouroboros versions installed: `{list}`. Using `{fs_version}` (highest)."
 
 ### Return shape
 
@@ -191,7 +191,7 @@ Return the lateral angle as a third option.
 **Below-trigger contract.** The parent skill is expected to gate on this trigger and not delegate when < 2 fixes were applied. If the parent does delegate with < 2 fixes (e.g. defensive call, future contract change), the bridge returns immediately without invoking `ouroboros_evaluate`: `{ evaluate: "skipped", reason: "insufficient_fix_count", fix_count: N }`. The parent renders this in the Mechanisms block as: `evaluate skipped (only N fix(es))`. No anomaly is required — this is a normal control-flow case, not a degradation.
 
 Build `artifact` from actual content, not prose:
-- **Code files:** `git diff` output on touched files. Prefix: "Evaluate ONLY the changes shown in this diff." If the diff exceeds ~4000 lines, drop entire per-file diffs (whole `diff --git` blocks) starting from the largest per-file diff, until under the limit — never truncate mid-file. After dropping, append a short note listing the omitted files and their line counts. Rationale: per-file size is the only signal reliably derivable from `git diff` alone; severity-based dropping is not implementable because the bridge has no contract with the parent for a `finding → file → severity` mapping. Trade-off accepted: a single very large fix may be dropped even if Critical; this is preferable to an unimplementable rule that silently degrades to arbitrary truncation.
+- **Code files:** `git diff` output on touched files. Prefix: "Evaluate ONLY the changes shown in this diff." If the diff exceeds ~4000 lines, drop entire per-file diffs (whole `diff --git` blocks) starting from the largest per-file diff, until under the limit — never truncate mid-file. After dropping, append a short note listing the omitted files and their line counts. Rationale: per-file size is the only signal reliably derivable from `git diff` alone; severity-based dropping is not implementable because the bridge has no contract with the parent for a `finding → file → severity` mapping. Trade-off accepted: a single very large fix may be dropped even if Critical; this is preferable to an unimplementable rule that silently degrades to arbitrary truncation. **When dropping occurs, the bridge MUST also append a `warn` anomaly to the evaluate result**: `"evaluate ran on truncated diff — dropped {N} file(s) from largest: {filename1} ({lines1}), {filename2} ({lines2}), … . Verdict reflects only the retained portion; review dropped files manually if any are load-bearing."` The parent renders this verbatim in Step 3's Mechanisms block (prefixed with `⚠`) so the audit trail surfaces the limitation rather than hiding it inside the artifact.
 - **Non-code files:** final state of modified sections with context.
 - **Mixed:** combine both. `artifact_type` "code" if majority code, "document" otherwise.
 - **Fallback (prose):** only if content cannot be extracted. Flag explicitly.
