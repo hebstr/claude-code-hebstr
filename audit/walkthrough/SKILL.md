@@ -76,7 +76,10 @@ Before processing the first finding, report a brief capabilities status block so
      - `available: true`, `version` null → "Ouroboros available, version unknown (`{consensus label}`)."
      - `available: false`, `version` set → "Ouroboros `{version}` unavailable (`{consensus label}`)."
      - `available: false`, `version` null → "Ouroboros not available (`{consensus label}`)."
-     - `{consensus label}` is "consensus enabled" if `consensus_available: true`, else "consensus unavailable (no OPENROUTER_API_KEY)". Exactly those two labels — never invent intermediate ones.
+     - `{consensus label}` resolves as follows (exact strings — never invent intermediates):
+       - `available: false` (any `consensus_available`) → "consensus moot — Ouroboros unavailable".
+       - `available: true`, `consensus_available: true` → "consensus enabled".
+       - `available: true`, `consensus_available: false` → "consensus unavailable (no OPENROUTER_API_KEY)".
   2. **Anomalies block** — render every entry from `anomalies[]` verbatim on its own line, in the order returned, with severity prefix: `info` → no prefix, `warn` → `⚠`, `error` → `✗`. Never drop, dedupe, rephrase, or summarize — this is the "no silent fallback" guarantee. When the array is empty, render nothing extra (the version line alone tells the user the check ran clean).
   3. No other transparency line about Ouroboros — the version + anomalies block is the single source of truth on Ouroboros status for this walkthrough.
 - **Author's defense**: "active on N/N findings" — count findings classified at Important severity or above (see Step 2b). If all findings qualify, say "active on all findings". If none, say "skipped — no Important+ findings".
@@ -175,12 +178,15 @@ When the defense applies: before concluding, generate the strongest counter-argu
 - "QA auto: skipped (clear verdict)."
 - "Cross-model L1: Agent (sonnet) agrees — finding confirmed."
 - "Cross-model L1: Agent (sonnet) disagrees → escalating to L2."
+- "Cross-model L1: Agent (sonnet) failed (timeout) → escalated to L2 (key set)."
+- "⚠ Cross-model L1: Agent (sonnet) failed (timeout); L2 unavailable. Finding marked 'unverified' — only main-model opinion available."
 - "Cross-model L2: score 0.38 (model: anthropic/claude-sonnet-4 via OpenRouter) — finding confirmed."
 - "Cross-model: L1 only (not Blocking/Required, no divergence)."
 - "Cross-model: skipped (finding classified Minor)."
 - "Cross-model L2: skipped — finding tagged 'agreed' from blindspot input (already cross-validated by <model> in Phase 1)."
 - "Cross-model L2: triggered — finding tagged 'claude-only' from blindspot input (mandatory: external model did not flag this, high self-preference risk)."
 - "Cross-model L2: triggered — finding tagged 'external-only' from blindspot input (Claude tends to under-rate these; cross-provider verdict is load-bearing)."
+- "⚠ Cross-model L2: mandatory but unavailable — finding tagged 'claude-only', OPENROUTER_API_KEY not set; accepted without cross-provider verification (per bridge no-silent-fallback rule)."
 
 This takes one line per mechanism — do not let it bloat the output.
 
@@ -264,6 +270,10 @@ After the status counts, add a **Mechanisms used** block summarizing what fired 
 > **Mechanisms:** blindspot input 32 (15 agreed / 9 claude-only / 8 external-only · external model: google/gemini-2.5-pro · L2 saved on 15 agreed, forced on 9 claude-only) · batch triage 20/32 (12 auto-fix, 8 auto-reject — claude-only and external-only forced to manual) · author's defense 10/11 Important+ · QA auto 0/22 (no ambiguous verdicts) · cross-model L1 6/8 Important+ (Agent sonnet, 1 divergence → escalated to L2) · cross-model L2 12/13 (9 forced by claude-only bucket, 3 on Blocking/Required, 1 by L1 divergence — model: anthropic/claude-sonnet-4 via OpenRouter) · lateral think 0 (no stuck points or regressions) · evaluate ✓ (score 0.88, based on git diff of 4 files) · drift skipped (< 4 fixes)
 
 The bridge returns pre-formatted mechanism summaries (cross-model status, evaluate results, drift score). Include them verbatim. If Ouroboros was not available, state: "Ouroboros: not available — walkthrough ran without automated QA, consensus, or drift check."
+
+**Low fix-count rendering.** When fewer than 2 fixes were applied, do not delegate to the bridge for evaluate (per the bridge's below-trigger contract). Render in the Mechanisms block: `evaluate skipped (only N fix(es))` (where N is 0 or 1). Likewise for drift at fewer than 4 fixes: `drift skipped (< 4 fixes)` — already shown in the example above. These two cases are normal control flow, no anomaly prefix.
+
+**Drift skipped at trigger-met.** When ≥ 4 fixes were applied but the bridge could not resolve `seed_content` (no PR, no commit message, no orchestrator description), the bridge returns a `warn` anomaly. Render in the Mechanisms block with the `⚠` prefix: `⚠ drift skipped (no seed_content resolvable)`. This case is a real degradation — the audit trail must show it.
 
 **Degraded L2 mode.** If Step 1's adversarial degradation notice fired and the user accepted to continue (internal flag `degraded_l2_accepted: true`), the L2 segment of the Mechanisms block must surface that choice explicitly rather than show a generic zero-count reason. Render it as: `cross-model L2 0/N (OPENROUTER_API_KEY not set — user accepted degraded mode at Step 1)`, where N is the count of findings that would otherwise have qualified (Blocking/Required + `claude-only` blindspot tags + L1 divergences). This makes the trade-off visible in the audit trail.
 
