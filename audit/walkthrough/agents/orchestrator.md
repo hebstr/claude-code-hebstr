@@ -84,7 +84,17 @@ Chain via /blindspot first? [y/N]
 **On user response:**
 
 - **No / empty / anything other than explicit yes** → proceed to "Detect deployment context" as normal.
-- **Yes** → delegate to `blindspot` via the Skill tool, passing `<target> --reviewer <reviewer>` (harmonized syntax — same positional + flag convention as walkthrough). When it completes, its report (containing the `### Convergence Analysis` section) is now in the conversation. Skip the rest of the orchestrator's work — no calibration, no separate reviewer launch — and emit the structured block below with `reviewer: blindspot+<original-reviewer>`, `context: <not-detected>` (deployment context detection is moot here — the walkthrough's Step 1 will read the blindspot report directly), `calibrated: no`, and the blindspot report verbatim in the `--- REVIEW REPORT ---` section. The walkthrough's Step 1 will detect the convergence section and tag findings accordingly.
+- **Yes** → blindspot must be invoked **by the user**, not via the Skill tool. blindspot's frontmatter sets `disable-model-invocation: true` (it is an explicit-invocation skill), and the Skill tool refuses to launch it with the error `Skill audit:blindspot cannot be used with Skill tool due to disable-model-invocation`. Instead, print the following message to the user and end the orchestrator cleanly:
+
+  ```
+  Run this command yourself in the prompt:
+
+    /blindspot <target> --reviewer <reviewer>
+
+  When blindspot's report is in the conversation (it will contain a `### Convergence Analysis` section), relaunch `/audit:walkthrough` with no arguments — the walkthrough will detect the report, tag findings by bucket (agreed / claude-only / external-only), and route L2 accordingly (skip on agreed, force on claude-only).
+  ```
+
+  Do not emit the structured block in this branch — the walkthrough has not run. The user re-enters via `/audit:walkthrough` (walkthrough-only mode) after blindspot completes; Step 1 of the parent skill detects the convergence section and proceeds.
 
 If `OPENROUTER_API_KEY` is not set, blindspot will fall back to single-model mode and append a warning. That is still useful — do not pre-empt the suggestion based on key absence; let blindspot handle it transparently.
 

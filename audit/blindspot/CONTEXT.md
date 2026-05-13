@@ -85,7 +85,7 @@ Ne remplace aucun skill d'audit — s'interpose quand le risque circulaire est d
 | 1 seul agent (cross-model-judge) | Le rapport est compilé par SKILL.md directement — pas besoin d'agent dédié |
 | Pas de devil's advocate (V2) | Scope minimal V1 |
 | Pas de rubric forcing (V2) | Scope minimal V1 |
-| Model family = toujours circulaire dans Claude Code | Le revieweur est toujours Claude — simplifie la logique |
+| Model family overlap dépend du target, pas du reviewer | Le reviewer est toujours Claude en Claude Code, mais le target peut être human-written ; les 4 lignes de la matrice sont atteignables |
 | Fallback = audit normal + warning détaillé | Le skill reste utile même sans clé OpenRouter |
 | Convergence analysis comme signal principal | Les findings "external-only" sont les blindspot candidates |
 
@@ -169,21 +169,21 @@ Résultat : Strong circularity détectée, cross-model judge + skill-adversary l
 
 | Fix | Fichier | Description |
 |-----|---------|-------------|
-| G1 | cross-model-judge.md | Allowlist de 6 modèles autorisés, rejet des model IDs inconnus |
-| G2+C-3 | SKILL.md | Validation d'input : path boundary (~/.claude/ ou cwd), anti-récursion (rejet de blindspot comme audit-skill) |
-| G7 | cross-model-judge.md | `trap EXIT` pour cleanup du fichier temp, `2>/dev/null` sur stderr curl |
+| G1 | SKILL.md + cross-model-judge.md | Validation du model ID : menu interactif Phase 1 (6 options curated + option 7 custom avec cost warning explicite), regex de format `^[A-Za-z0-9_-]+/[A-Za-z0-9._-]+$` (case-insensitive) appliquée côté skill ET côté agent (defense in depth), jq --arg pour parameterization injection-safe. Pas d'allowlist stricte — option 7 accepte tout ID OpenRouter conforme au regex après confirmation utilisateur. |
+| G2+C-3 | SKILL.md | Validation d'input : path boundary (~/.claude/ ou cwd), anti-récursion path-based (résolution `--reviewer` → SKILL.md, comparaison realpath contre celui de blindspot, rejet si match ; couvre nom littéral, chemin absolu, chemin relatif, symlink ; best-effort check sur wrappers qui invoquent /blindspot en interne) |
+| G7 | cross-model-judge.md | (a) Substitution via vraies vars shell `$MODEL` / `$AUDIT_PROMPT` au lieu de placeholders `<...>` ; heredoc `__AUDIT_PROMPT_EOF__` pour le prompt. (b) Guards explicites dans le bash : rejet placeholder résiduel (`<...>`, `{{...}}`, `...`), regex format validation dupliquée du prose côté bash. (c) `trap cleanup EXIT INT TERM` + `cleanup` explicite final en backstop si le bloc est splitté. (d) `-sS` sur curl + capture stderr dans `$CURL_ERR` pour propager DNS/TLS/auth/timeout ; remplace `2>/dev/null` initial. |
 | C2 | SKILL.md | Méthodologie de convergence analysis (semantic matching, 3 buckets, gestion source manquante) |
 | I-1 | SKILL.md | Reformulation "no subagent" → "orchestration in main model, seul cross-model-judge délégué" |
-| I-3 | SKILL.md | Path overlap restructuré en 3 critères OR explicites |
-| I-5/G3 | SKILL.md | Claim de model override supprimée, renvoi à l'allowlist |
+| I-3 | SKILL.md | Path overlap restructuré en 3 critères OR explicites + procédure de résolution runtime du chemin d'install de l'audit-skill (CLAUDE_PLUGIN_ROOT shortcut → installed_plugins.json → ~/.claude/skills/ → fallback condition 3 seule), au lieu d'une dépendance statique à `${CLAUDE_PLUGIN_ROOT}`. Condition 3 généralisée : tout couple (audit skill Claude-authored, cible Claude-touched) force path overlap = Yes, plus seulement skill-adversary sur skills. |
+| I-5/G3 | SKILL.md | Claim de model override supprimée, renvoi au menu interactif (6 options curated + custom flow) |
 | XF1 | SKILL.md | Instructions explicites pour passer les 4 inputs au cross-model-judge |
 
 #### Findings différés (passe 2, non urgents)
 
 - Trigger FPs/FNs : skill à invocation explicite, recall=0% assumé
 - API key leakage : risque théorique (curl en subshell)
-- Finding cap de 10 : cosmétique
-- Unreachable matrix rows : documentation théorique
+- ~~Finding cap de 10~~ — résolu walkthrough 2026-05-14 : cap dur supprimé, soft cap à 20 sur les minor uniquement, critical/important toujours rapportés intégralement
+- ~~Unreachable matrix rows~~ — résolu walkthrough 2026-05-14 : logique "always true" corrigée, branche "No circularity" reformulée pour honorer l'invocation explicite
 - Validation existence audit skill : l'erreur du Skill tool suffit
 
 ### Deuxième test fonctionnel — skill-adversary (2026-03-31)

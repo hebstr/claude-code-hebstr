@@ -105,7 +105,7 @@ Keep the status block itself to 2-4 short lines. Example:
 
 ### Adversarial degradation notice (blocking)
 
-Triggers when `consensus_available: false` (i.e., `OPENROUTER_API_KEY` not set in the environment). When the key is set, skip this section silently — the standard transparency block already reports "consensus enabled".
+Triggers when `consensus_available: false` (i.e., `OPENROUTER_API_KEY` not set in the environment). When the key is set, skip this section silently — the standard transparency block already reports "consensus enabled". Also skip when the Ouroboros enrichment notice fires (Ouroboros absent → L2 cannot run regardless of the key; the enrichment notice already covers L2 in its disabled list).
 
 When triggered, immediately after the transparency status block (and the mechanism glossary if Ouroboros is available), display the following notice in the user's language and **wait for an explicit user response** before proceeding to Step 1b or Step 2. This is the only blocking interaction in Step 1 — fire it exactly once per walkthrough, never repeat for individual findings.
 
@@ -138,6 +138,32 @@ To enable cross-provider adversarial validation:
 **Do not skip this notice based on deployment context.** Even for `personal` tier, a Blocking finding may carry real risk — the user must explicitly accept the degraded mode rather than have it silently applied.
 
 **Do not persist the user's choice.** A "don't ask again" toggle would turn a single dismissal into a permanent blindspot; the notice is cheap (one interaction per walkthrough, only when the key is absent) and disappears entirely once the key is set.
+
+### Ouroboros enrichment notice (non-blocking)
+
+Triggers when the bridge reports `available: false` AND `version: null` — i.e., the Ouroboros plugin is genuinely not installed. Skip when `version` is non-null: the standard anomalies block already surfaces a more precise `error` line about cache-present-but-MCP-unavailable, and a duplicate notice would clutter the output.
+
+When triggered, display the following notice in the user's language **immediately after** the transparency status block, **instead of** the Adversarial degradation notice above (see the guard added to that section). The walkthrough proceeds without waiting: this is informational, not blocking. Fire exactly once per walkthrough, never on individual findings.
+
+```
+ℹ Ouroboros not detected — this walkthrough runs without the following enrichments:
+
+  - QA auto — automated second opinion on uncertain findings
+  - Cross-model L1 — intra-family Claude re-evaluation on Important+ findings
+  - Cross-model L2 — cross-provider verdict via OpenRouter (requires Ouroboros even when OPENROUTER_API_KEY is set)
+  - Lateral think — creative unblocking when a point stays stuck
+  - Drift check — detects whether cumulative fixes shifted code intent
+
+To enable for future walkthroughs (optional):
+  /plugin marketplace add Q00/ouroboros
+  /plugin install ouroboros@ouroboros
+
+Continuing without — no input needed.
+```
+
+**Why non-blocking.** Unlike the Adversarial degradation notice, Ouroboros absence does not silently downgrade a safety guarantee the user might assume is on: the consensus label correctly resolves to "consensus moot — Ouroboros unavailable" in the status block, and L2 simply does not run. Findings are still validated by the reviewer. Forcing an abort here would not improve this walkthrough's safety, only delay it.
+
+**Do not persist the user's choice.** Same reasoning as the OPENROUTER notice: one informational line per walkthrough is cheap, and it disappears once Ouroboros is installed.
 
 ## Step 1b: Triage and batch processing
 
@@ -356,3 +382,5 @@ All Ouroboros tool calls (detection, QA, cross-model validation, lateral think, 
 - **Step 3 (drift):** when >= 4 fixes applied, delegate to the bridge for drift check.
 
 Present all Ouroboros results inline as described in the mechanism transparency format (Step 2b). Runtime errors are caught by the bridge — never let an Ouroboros failure block the walkthrough.
+
+**Model selection (L2 consensus).** The L2 consensus model roster — advocate, devil, judge (defaults: `openrouter/anthropic/claude-opus-4-6`, `openrouter/openai/gpt-4o`, `openrouter/google/gemini-2.5-pro`) — is owned by Ouroboros, not by this skill. The `ouroboros_evaluate` MCP schema does not accept a model parameter, so the bridge cannot influence the choice per-call. To customize without forking Ouroboros, set the env vars `OUROBOROS_CONSENSUS_MODELS`, `OUROBOROS_CONSENSUS_ADVOCATE_MODEL`, `OUROBOROS_CONSENSUS_DEVIL_MODEL`, or `OUROBOROS_CONSENSUS_JUDGE_MODEL` before launching Claude Code (MCP servers inherit env at startup), or edit `~/.ouroboros/config.yaml` under the `consensus.models` key (reloaded per call). The actual judge model is always reported post-facto in the Step 3 Mechanisms block, so the audit trail is complete regardless of how it was configured.
