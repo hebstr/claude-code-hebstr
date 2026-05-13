@@ -11,11 +11,73 @@ You handle all Ouroboros tool calls for the walkthrough skill. The parent skill 
 
 Ouroboros tools are MCP tools with prefixed names (e.g. `mcp__plugin_ouroboros_ouroboros__ouroboros_qa`). They may be deferred.
 
-1. Run `ToolSearch` with query `+ouroboros qa`. No results → return `{ available: false }`.
-2. Probe: call `ouroboros_qa` with `artifact: "probe"`, `quality_bar: "probe"`. Success → available. Error → return `{ available: false, reason: "runtime error" }`.
-3. Check `OPENROUTER_API_KEY` in environment. Report `consensus_available: true/false`.
+The detection step performs three independent checks (MCP probe, filesystem version scan, OpenRouter key) and synthesizes them into a single status object. Every anomaly is surfaced — never silently downgraded.
 
-Return: `{ available, consensus_available, reason? }`. The parent skill uses this for the transparency status. Render rule: `consensus_available: true` → "consensus enabled"; `consensus_available: false` → "consensus unavailable (no OPENROUTER_API_KEY)". Do not invent intermediate labels like "single-model fallback" — there are exactly two states.
+### Compatibility constants
+
+```
+MIN_OUROBOROS = "0.38.2"
+MAX_TESTED    = "0.38.2"
+CACHE_DIR     = "~/.claude/plugins/cache/ouroboros/ouroboros/"
+```
+
+Baseline: all walkthrough features require ≥ `MIN_OUROBOROS`. There is no per-feature compatibility table — if the version is below the floor, the bridge reports Ouroboros unavailable in full. When a future Ouroboros release introduces a tool, parameter, or behavior the walkthrough depends on (and the existing version no longer suffices), bump both `MIN_OUROBOROS` and `MAX_TESTED` after verifying the walkthrough end-to-end against it.
+
+### Procedure
+
+1. **MCP probe.** Run `ToolSearch` with query `+ouroboros qa`.
+   - No results → `mcp_up: false`, `mcp_error: "tools not discoverable"`.
+   - Found → call `ouroboros_qa` with `artifact: "probe"`, `quality_bar: "probe"`. Success → `mcp_up: true`. Error → `mcp_up: false`, `mcp_error: "<error message>"`.
+
+2. **Filesystem version scan.** Run:
+   ```bash
+   ls -d ~/.claude/plugins/cache/ouroboros/ouroboros/*/ 2>/dev/null | xargs -n1 basename | sort -V
+   ```
+   - Empty output, no shell error → `fs_versions: []`.
+   - Non-empty → list of installed versions in ascending order. Take the last (highest) as `fs_version`.
+   - Shell error (perms, IO, missing parent) → `fs_versions: []`, `fs_error: "<message>"`.
+
+3. **Version classification.** Apply only when `fs_version` is set; otherwise `version_class: "unknown"`.
+   - SemVer regex `^[0-9]+\.[0-9]+\.[0-9]+$` does not match → `version_class: "unparsable"`.
+   - Otherwise compare against `MIN_OUROBOROS` and `MAX_TESTED` using `printf '%s\n%s\n' "$a" "$b" | sort -V`:
+     - `fs_version < MIN_OUROBOROS` → `version_class: "below_min"`.
+     - `MIN_OUROBOROS <= fs_version <= MAX_TESTED` → `version_class: "supported"`.
+     - `fs_version > MAX_TESTED` → `version_class: "above_tested"`.
+
+4. **OpenRouter key.** Check `$OPENROUTER_API_KEY`. Report `consensus_available: true/false`. Independent from version and MCP state.
+
+5. **Synthesize.** Apply this decision table (first row matching wins). Anomalies are accumulated, not replaced — multiple may apply per row.
+
+| `mcp_up` | `fs_versions` | `version_class` | `available` | `version` | Anomalies |
+|---|---|---|---|---|---|
+| true | empty, no `fs_error` | — | true | null | `warn`: "Cache Ouroboros introuvable sous `CACHE_DIR`. Version inconnue, compatibilité non vérifiée." |
+| true | empty, with `fs_error` | — | true | null | `warn`: "Échec lecture cache Ouroboros : `{fs_error}`. Version non vérifiée." |
+| true | non-empty | `unparsable` | true | `{fs_version}` | `warn`: "Version Ouroboros « `{fs_version}` » non parsable comme SemVer. Compatibilité inconnue, procède sans garantie." |
+| true | non-empty | `below_min` | false | `{fs_version}` | `error`: "Ouroboros `{fs_version}` < minimum requis `{MIN_OUROBOROS}`. Mets à jour le plugin ou utilise `/walkthrough` sans Ouroboros." |
+| true | non-empty | `above_tested` | true | `{fs_version}` | `warn`: "Ouroboros `{fs_version}` > version testée `{MAX_TESTED}`. Procède, peut diverger." |
+| true | non-empty | `supported` | true | `{fs_version}` | — |
+| false | non-empty | any | false | `{fs_version}` | `error`: "Cache Ouroboros présent (`{fs_version}`) mais serveur MCP indisponible (`{mcp_error}`). Vérifie l'installation ou redémarre Claude Code." |
+| false | empty | — | false | null | — (Ouroboros simply not installed — standard case, no anomaly.) |
+
+In addition to the row's anomalies, if `fs_versions` has length ≥ 2, append an `info` anomaly: "Versions Ouroboros installées : `{list}`. Utilise `{fs_version}` (la plus haute)."
+
+### Return shape
+
+```yaml
+{
+  available: bool,
+  version: "X.Y.Z" | null,
+  consensus_available: bool,
+  anomalies: [
+    { severity: "info" | "warn" | "error", message: "..." },
+    ...
+  ]
+}
+```
+
+The parent skill renders the version line plus every anomaly verbatim, in order. No deduplication, no rephrasing, no silent skip — that is the "no silent fallback" contract. Render rules for the parent (also restated in SKILL.md):
+- `consensus_available: true` → "consensus enabled"; `false` → "consensus unavailable (no OPENROUTER_API_KEY)". Exactly these two labels.
+- Anomaly severity prefix: `info` → no prefix, `warn` → `⚠`, `error` → `✗`.
 
 ## QA — second opinion on ambiguous findings (Step 2b)
 

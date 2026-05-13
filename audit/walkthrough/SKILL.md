@@ -70,7 +70,15 @@ Before processing the first finding, report a brief capabilities status block so
 
 - **Deployment context** (only if Step 0 ran): report the detected context level and how it was determined. E.g., "Context: personal (detected from path ~/scripts/)." or "Context: production (CI config found)." If the context was asked to the user, say "Context: [level] (user-provided)."
 - **Reviewer and calibration** (only if Step 0 ran): report the reviewer used and its calibration status, both parsed from the orchestrator block (`reviewer: <name>` and `calibrated: yes|no`). E.g., "Reviewer: critical-code-reviewer (calibrated)." or "Reviewer: skill-adversary (not calibrated)." In walkthrough-only mode, omit this line — there was no orchestrator run to report.
-- **Ouroboros**: report the result from the bridge's detection probe. Use exactly the bridge's canonical labels — "available" / "not available" for the probe, and "consensus enabled" / "consensus unavailable (no OPENROUTER_API_KEY)" for `consensus_available`. Never invent intermediate labels.
+- **Ouroboros**: render the bridge's detection result. Three components, in order:
+  1. **Version line** — always shown, even when everything is normal. Format:
+     - `available: true`, `version` set → "Ouroboros `{version}` ✓ (`{consensus label}`)."
+     - `available: true`, `version` null → "Ouroboros available, version unknown (`{consensus label}`)."
+     - `available: false`, `version` set → "Ouroboros `{version}` unavailable (`{consensus label}`)."
+     - `available: false`, `version` null → "Ouroboros not available (`{consensus label}`)."
+     - `{consensus label}` is "consensus enabled" if `consensus_available: true`, else "consensus unavailable (no OPENROUTER_API_KEY)". Exactly those two labels — never invent intermediate ones.
+  2. **Anomalies block** — render every entry from `anomalies[]` verbatim on its own line, in the order returned, with severity prefix: `info` → no prefix, `warn` → `⚠`, `error` → `✗`. Never drop, dedupe, rephrase, or summarize — this is the "no silent fallback" guarantee. When the array is empty, render nothing extra (the version line alone tells the user the check ran clean).
+  3. No other transparency line about Ouroboros — the version + anomalies block is the single source of truth on Ouroboros status for this walkthrough.
 - **Author's defense**: "active on N/N findings" — count findings classified at Important severity or above (see Step 2b). If all findings qualify, say "active on all findings". If none, say "skipped — no Important+ findings".
 - **Severity reordering**: "applied" (if reordering happened) or "original order preserved" (if no tiers detected).
 - **Batch mode**: "active (N findings >= 15)" when Step 1b will run, "inactive (N findings < 15)" when it won't, or "forced via --batch" / "disabled via --no-batch" when overridden by the user.
@@ -90,7 +98,7 @@ If Ouroboros is available, add a brief glossary of the mechanisms that may fire 
 This glossary appears only once, before the first finding. Keep it compact — one line per mechanism, no elaboration.
 
 Keep the status block itself to 2-4 short lines. Example:
-> Context: personal (detected from path ~/scripts/). Reviewer: critical-code-reviewer (calibrated). Ouroboros available (consensus enabled). Author's defense active on 4/6 findings. Severity reordering applied — 2 Blocking first. Batch mode: active (32 findings ≥ 15).
+> Context: personal (detected from path ~/scripts/). Reviewer: critical-code-reviewer (calibrated). Ouroboros 0.38.2 ✓ (consensus enabled). Author's defense active on 4/6 findings. Severity reordering applied — 2 Blocking first. Batch mode: active (32 findings ≥ 15).
 
 ### Adversarial degradation notice (blocking)
 
