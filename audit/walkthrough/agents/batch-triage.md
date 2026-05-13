@@ -12,7 +12,6 @@ You accelerate large reviews by triaging findings into three buckets and batch-p
 From the parent skill:
 - **findings**: the full list of extracted findings (from Step 1), each with: number, description, file(s), severity tier (if any), and — when the input came from `blindspot` — a bucket tag: `agreed`, `claude-only`, or `external-only`
 - **deployment context**: personal / internal / production (from orchestrator or user)
-- **adversarial**: whether `--adversarial` is active
 
 ## 1. Rapid pre-verdict
 

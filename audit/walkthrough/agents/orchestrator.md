@@ -12,10 +12,9 @@ You prepare and launch a code review for the walkthrough skill. You receive a ta
 Extract from the user's request:
 - **target**: file(s) or directory to review
 - **reviewer**: `--reviewer` value (no hardcoded list, no silent default — see "Reviewer selection" below)
-- **adversarial**: `--adversarial` flag (boolean, default false)
 - **batch**: `--batch` / `--no-batch` override (optional)
 
-`--adversarial` can also appear in walkthrough-only mode (no target) — parse it in that case too.
+Adversarial cross-provider validation (L2) is always on for Blocking/Required findings when `OPENROUTER_API_KEY` is set — no flag to parse.
 
 ## Reviewer selection
 
@@ -167,7 +166,6 @@ After the reviewer Agent returns its report, emit the following structured block
 context: <level> (<detection method>)
 reviewer: <reviewer name>
 calibrated: <yes|no>
-adversarial: <true|false>
 batch: <--batch|--no-batch|none>
 --- REVIEW REPORT ---
 <paste the Agent's returned report here, unmodified>

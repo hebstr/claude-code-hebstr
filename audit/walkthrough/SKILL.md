@@ -1,9 +1,9 @@
 ---
 name: walkthrough
 description: >
-  Interactive, point-by-point walkthrough of a review report produced by any review skill (skill-adversary, critical-code-reviewer, or any other). Two modes: **orchestrator mode** (provide a target + optional `--reviewer` and `--adversarial` flags — detects deployment context, calibrates severity, launches the reviewer, then walks through its report) and **walkthrough-only mode** (processes an existing report from the conversation). Parses review findings and processes each one at a time: re-evaluates validity, proposes and applies fixes, checks impacted files for regressions, and waits for user approval before moving on.
+  Interactive, point-by-point walkthrough of a review report produced by any review skill (skill-adversary, critical-code-reviewer, or any other). Two modes: **orchestrator mode** (provide a target + optional `--reviewer` flag — detects deployment context, calibrates severity, launches the reviewer, then walks through its report) and **walkthrough-only mode** (processes an existing report from the conversation). Parses review findings and processes each one at a time: re-evaluates validity, proposes and applies fixes, checks impacted files for regressions, and waits for user approval before moving on. Adversarial cross-provider validation (L2) is always active on Blocking/Required findings when `OPENROUTER_API_KEY` is set.
 
-  Usage: `/walkthrough [target] [--reviewer name] [--adversarial] [--batch|--no-batch]`
+  Usage: `/walkthrough [target] [--reviewer name] [--batch|--no-batch]`
 
   Orchestrator mode: provide a target (file, directory, or glob). The set of available reviewers is discovered at runtime by scanning installed Claude Code skills — no hardcoded list. If `--reviewer` is omitted, the orchestrator detects the target type, suggests an adapted reviewer from the scanned set, and asks the user to confirm or pick another — there is no silent default.
 
@@ -29,13 +29,13 @@ When the orchestrator finishes, it emits a structured block containing:
 - `--- REVIEW REPORT ---` with the reviewer's condensed findings
 - `--- PROCEED TO STEP 1 ---`
 
-Parse the block for: deployment context (level + detection method), reviewer used, calibration status, `--adversarial` flag value, `--batch`/`--no-batch` override, and the review findings.
+Parse the block for: deployment context (level + detection method), reviewer used, calibration status, `--batch`/`--no-batch` override, and the review findings.
 
 **CRITICAL: Do not stop here.** The review report is now available. Immediately proceed to Step 1 — do not summarize the review, do not ask the user what to do next, do not treat the reviewer's output as the end of your task. Your task is the walkthrough, not the review. The review was just the input. Continue now.
 
 **Recovery:** if the orchestrator or reviewer fails mid-execution (context exhaustion, agent timeout, interrupted session), the user can re-invoke `/walkthrough` without a target. If a partial or complete review report exists in the conversation from a previous attempt, it will be picked up in walkthrough-only mode — no need to re-run the reviewer.
 
-If no target was provided (walkthrough-only mode), parse `--adversarial` and `--batch`/`--no-batch` from the user's invocation and skip directly to Step 1.
+If no target was provided (walkthrough-only mode), parse `--batch`/`--no-batch` from the user's invocation and skip directly to Step 1.
 
 **Working tree pre-check (informational, non-blocking).** Before Step 1, run `git status --porcelain` once. The directory is the orchestrator-resolved target root in orchestrator mode, or the current working directory in walkthrough-only mode. If the output is non-empty, surface a single-line warning to the user (e.g., "Working tree has uncommitted changes — fixes will mix with existing diffs; revert-on-regression scope is limited to walkthrough edits."). Do not block. If the user wants to proceed on a dirty tree, that is their call. Skip the check silently when not in a git repository.
 
@@ -74,7 +74,7 @@ Before processing the first finding, report a brief capabilities status block so
 - **Author's defense**: "active on N/N findings" — count findings classified at Important severity or above (see Step 2b). If all findings qualify, say "active on all findings". If none, say "skipped — no Important+ findings".
 - **Severity reordering**: "applied" (if reordering happened) or "original order preserved" (if no tiers detected).
 - **Batch mode**: "active (N findings >= 15)" when Step 1b will run, "inactive (N findings < 15)" when it won't, or "forced via --batch" / "disabled via --no-batch" when overridden by the user.
-- **Cross-model validation**: report the active level based on `--adversarial` flag and bridge detection results (L1 always on Important+; L2 on Blocking/Required with `--adversarial` or on L1 divergence — see `agents/ouroboros-bridge.md` for details).
+- **Cross-model validation**: report the active level based on bridge detection results (L1 always on Important+; L2 always on Blocking/Required when `OPENROUTER_API_KEY` is set, or on L1 divergence — see `agents/ouroboros-bridge.md` for details).
 - **Blindspot input** (only when the report came from `blindspot`): report bucket counts and the external model that already pre-validated the agreed bucket. Format: "blindspot input — N agreed / M Claude-only / K external-only (external model: <name>). L2 will skip the agreed bucket and force on Claude-only."
 
 If Ouroboros is available, add a brief glossary of the mechanisms that may fire during the walkthrough, so the user understands the transparency lines they will see later:
@@ -82,7 +82,7 @@ If Ouroboros is available, add a brief glossary of the mechanisms that may fire 
 > **Mechanisms available for this walkthrough:**
 > - *QA auto* — automated second opinion when the verdict on a finding is genuinely uncertain (via `ouroboros_qa`)
 > - *Cross-model L1 (intra-family)* — independent re-evaluation by an Agent with an alternate Claude model (e.g. Sonnet if main is Opus); triggers on Important+ findings
-> - *Cross-model L2 (cross-provider)* — independent verdict from a different provider via OpenRouter, using `ouroboros_evaluate` with `trigger_consensus: true`; triggers on Blocking/Required (`--adversarial`) or L1 divergence
+> - *Cross-model L2 (cross-provider)* — independent verdict from a different provider via OpenRouter, using `ouroboros_evaluate` with `trigger_consensus: true`; triggers on Blocking/Required or L1 divergence
 > - *Lateral think* — creative unblocking when a point stays stuck after 2+ exchanges
 > - *Evaluate* — final validation of all applied changes (triggers when ≥ 2 fixes)
 > - *Drift check* — detects whether cumulative fixes shifted the code away from its original intent (triggers when ≥ 4 fixes)
@@ -92,11 +92,47 @@ This glossary appears only once, before the first finding. Keep it compact — o
 Keep the status block itself to 2-4 short lines. Example:
 > Context: personal (detected from path ~/scripts/). Reviewer: critical-code-reviewer (calibrated). Ouroboros available (consensus enabled). Author's defense active on 4/6 findings. Severity reordering applied — 2 Blocking first. Batch mode: active (32 findings ≥ 15).
 
+### Adversarial degradation notice (blocking)
+
+Triggers when `consensus_available: false` (i.e., `OPENROUTER_API_KEY` not set in the environment). When the key is set, skip this section silently — the standard transparency block already reports "consensus enabled".
+
+When triggered, immediately after the transparency status block (and the mechanism glossary if Ouroboros is available), display the following notice in the user's language and **wait for an explicit user response** before proceeding to Step 1b or Step 2. This is the only blocking interaction in Step 1 — fire it exactly once per walkthrough, never repeat for individual findings.
+
+```
+⚠ Cross-provider adversarial validation (L2) disabled — OPENROUTER_API_KEY is not set in the environment.
+
+Without it, only intra-family L1 runs on Important+ findings (an alternate Claude model re-evaluates Claude's work — same distributional assumptions). L2 (independent verdict from a different provider via OpenRouter) cannot trigger on Blocking/Required findings, removing the strongest safety net against Claude-only false positives.
+
+How do you want to proceed?
+  1. Continue without L2 (degraded mode, explicitly accepted)
+  2. Abort — I want to configure the key first
+```
+
+**On user response:**
+
+- **`1` / "continue" / "proceed" / explicit acceptance** → proceed normally to Step 1b or Step 2. Internally record `degraded_l2_accepted: true` so Step 3's wrap-up can mention "L2 unavailable — user accepted degraded mode" in the Mechanisms block.
+- **`2` / "abort" / "configure" / anything signalling abort** → print the configuration instructions verbatim below, then end the walkthrough cleanly (no Step 2, no Step 3 wrap-up, no Step 4 persist — the walkthrough did not run). Tell the user to relaunch `/walkthrough` after configuring.
+- **Anything else / ambiguous** → re-present the menu once, then default to abort on a second ambiguous response (fail-safe: do not silently downgrade adversarial validation).
+
+Configuration instructions to print on abort:
+
+```
+To enable cross-provider adversarial validation:
+  1. Get an API key at https://openrouter.ai/keys (free tier available)
+  2. Export it: export OPENROUTER_API_KEY=<your-key>
+     For persistence, add the line to ~/.bashrc or ~/.zshrc, then restart your shell.
+  3. Relaunch: /walkthrough <target> [--reviewer name]
+```
+
+**Do not skip this notice based on deployment context.** Even for `personal` tier, a Blocking finding may carry real risk — the user must explicitly accept the degraded mode rather than have it silently applied.
+
+**Do not persist the user's choice.** A "don't ask again" toggle would turn a single dismissal into a permanent blindspot; the notice is cheap (one interaction per walkthrough, only when the key is absent) and disappears entirely once the key is set.
+
 ## Step 1b: Triage and batch processing
 
 This step activates automatically when the review contains **15 or more findings**. Below 15, skip directly to Step 2. The user can force batch mode with `--batch` (active regardless of count) or suppress it with `--no-batch`.
 
-When active, delegate to `agents/batch-triage.md`. Pass the full findings list, deployment context, and `--adversarial` flag. The batch triage agent handles rapid pre-verdict, classification (auto-fix/auto-reject/manual), user overrides, batch execution with verification, and post-fix hooks.
+When active, delegate to `agents/batch-triage.md`. Pass the full findings list and deployment context. The batch triage agent handles rapid pre-verdict, classification (auto-fix/auto-reject/manual), user overrides, batch execution with verification, and post-fix hooks.
 
 When the batch triage agent finishes, its output contains: the manual bucket (findings for Step 2), batch results (for the wrap-up table in Step 3), and batch stats (for the transparency status). Proceed to Step 2 with only the manual bucket.
 
@@ -217,9 +253,11 @@ Follow with:
 - List of DEFERRED items with their one-line justification — these are the user's follow-up backlog
 
 After the status counts, add a **Mechanisms used** block summarizing what fired during the walkthrough and — critically — **why each non-fired mechanism was not triggered**. For each mechanism, report: count of invocations, and if zero, the reason in parentheses. When the input came from `blindspot`, add a `blindspot input` segment first, summarizing bucket distribution and L2 savings/forces from the bucket-aware routing. Example:
-> **Mechanisms:** blindspot input 32 (15 agreed / 9 claude-only / 8 external-only · external model: google/gemini-2.5-pro · L2 saved on 15 agreed, forced on 9 claude-only) · batch triage 20/32 (12 auto-fix, 8 auto-reject — claude-only and external-only forced to manual) · author's defense 10/11 Important+ · QA auto 0/22 (no ambiguous verdicts) · cross-model L1 6/8 Important+ (Agent sonnet, 1 divergence → escalated to L2) · cross-model L2 12/13 (9 forced by claude-only bucket, 3 by adversarial flag, 1 by L1 divergence — model: anthropic/claude-sonnet-4 via OpenRouter) · lateral think 0 (no stuck points or regressions) · evaluate ✓ (score 0.88, based on git diff of 4 files) · drift skipped (< 4 fixes)
+> **Mechanisms:** blindspot input 32 (15 agreed / 9 claude-only / 8 external-only · external model: google/gemini-2.5-pro · L2 saved on 15 agreed, forced on 9 claude-only) · batch triage 20/32 (12 auto-fix, 8 auto-reject — claude-only and external-only forced to manual) · author's defense 10/11 Important+ · QA auto 0/22 (no ambiguous verdicts) · cross-model L1 6/8 Important+ (Agent sonnet, 1 divergence → escalated to L2) · cross-model L2 12/13 (9 forced by claude-only bucket, 3 on Blocking/Required, 1 by L1 divergence — model: anthropic/claude-sonnet-4 via OpenRouter) · lateral think 0 (no stuck points or regressions) · evaluate ✓ (score 0.88, based on git diff of 4 files) · drift skipped (< 4 fixes)
 
 The bridge returns pre-formatted mechanism summaries (cross-model status, evaluate results, drift score). Include them verbatim. If Ouroboros was not available, state: "Ouroboros: not available — walkthrough ran without automated QA, consensus, or drift check."
+
+**Degraded L2 mode.** If Step 1's adversarial degradation notice fired and the user accepted to continue (internal flag `degraded_l2_accepted: true`), the L2 segment of the Mechanisms block must surface that choice explicitly rather than show a generic zero-count reason. Render it as: `cross-model L2 0/N (OPENROUTER_API_KEY not set — user accepted degraded mode at Step 1)`, where N is the count of findings that would otherwise have qualified (Blocking/Required + `claude-only` blindspot tags + L1 divergences). This makes the trade-off visible in the audit trail.
 
 Keep it to 2-3 lines max — the user was there for the whole walkthrough.
 
