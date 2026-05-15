@@ -256,6 +256,14 @@ If either model returned zero findings or errored out, skip the convergence anal
 
 **Meta-bias note.** This matching step is performed by Claude — the same model whose self-preference is being audited. Self-preference can bias the classification in two directions: (a) over-matching (declaring "agreed" to suppress an external-only finding Claude missed), (b) under-matching (declaring "Claude-only" when Claude agreed but used different wording, inflating own-findings novelty). Boundary cases between agreed and Claude-only deserve the most skepticism. This caveat is also surfaced in the Transparency block.
 
+**Counts (mandatory — render verbatim, do not omit).** Before listing the buckets, emit a single line of the form:
+
+```
+**Counts:** <R> raw findings (<E> external + <C> Claude) → <A> agreed pair(s) + <CO> Claude-only + <EO> external-only
+```
+
+Where: `R = E + C` (total raw count across both sources before convergence); `A` = number of agreed pairs (each pair counts once here); `CO` = items in the Claude-only bucket; `EO` = items in the External-only bucket. The identity `2·A + CO + EO = R` must hold — if it does not, the bucketing has dropped or duplicated a finding and must be redone before continuing. Near-miss items count as **two separate findings** (one Claude-only, one external-only) per the matching-procedure rule above; never collapse a near-miss into a single line in the counts or in the bucket lists.
+
 **Agreed findings** (flagged by both models):
 <List — these are high-confidence findings>
 
@@ -278,6 +286,10 @@ If either model returned zero findings or errored out, skip the convergence anal
   to suppress findings it missed, or under-matched to inflate its own findings' novelty.
 - **Recommendation:** Review "External-only findings" with particular care —
   these represent potential blindspots in Claude's self-evaluation.
+
+### Next step
+
+Run `/audit:walkthrough` (no arguments) to process these findings interactively. The walkthrough auto-detects this report's `### Convergence Analysis` section, tags each finding by bucket (agreed / claude-only / external-only), and routes L2 cross-model verification accordingly — skipped on agreed, forced on claude-only, forced on external-only.
 ```
 
 ### If fallback mode (no OpenRouter key)
@@ -325,6 +337,10 @@ No cross-model countermeasure was available.
 - **External model used:** None
 - **Residual bias risk:** HIGH — no cross-family mitigation applied.
   All findings should be treated with additional skepticism.
+
+### Next step
+
+Run `/audit:walkthrough` (no arguments) to process these findings interactively. Without cross-model convergence data, all Important+ findings will go through Claude's standard L2 cross-provider check (no bucket routing, since no external model contributed).
 ```
 
 ## Important constraints

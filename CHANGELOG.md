@@ -1,5 +1,14 @@
 # Changelog
 
+## [audit 0.2.1] - 2026-05-15
+
+### `audit`
+
+#### Changed
+
+- `walkthrough`: broaden circularity-check trigger in the orchestrator. Detection is now artifact-driven and reviewer-agnostic — any `SKILL.md`, any `*.md` under an `agents/` directory, any target inside `~/.claude/` or a plugin install, and any MCP tool-definition target now nudge toward `/blindspot`. Previously, `SKILL.md` reviewed by a non-skill-tool reviewer (e.g. `critical-code-reviewer`) would silently bypass the nudge, because the condition was gated by `reviewer.category == skill-tool`. The principle: circularity comes from the artifact being Claude-interpreted at runtime, not from which reviewer was chosen. Default response stays `[y/N]` to avoid chaining costly cross-model audits by inertia.
+- `blindspot`: append an explicit `### Next step` block to both report templates (cross-model success and fallback). The block names the exact command — `/audit:walkthrough` with no arguments — and states what the walkthrough will do with the report (bucket-aware L2 routing in cross-model mode, standard L2 in fallback mode). Closes the loop: previously the report could land in the conversation with no instruction on how to consume it, leaving Claude to recall the chained command from `CLAUDE.md` — not always reliable across long sessions.
+
 ## [0.4.0] - 2026-05-12
 
 ### `workflow`

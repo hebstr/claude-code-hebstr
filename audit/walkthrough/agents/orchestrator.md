@@ -66,9 +66,16 @@ On the user's response: empty input or explicit confirmation → use the suggest
 
 Before doing any heavy work (memory loading, calibration, reviewer launch), check whether the upcoming review is structurally circular — Claude reviewing a Claude-authored artifact in the same skill family. If so, suggest chaining via `/blindspot` instead of running the reviewer directly.
 
-**High-signal circularity (suggest blindspot):**
-- chosen reviewer's `category` from the scan is `skill-tool` AND target contains a `SKILL.md` or MCP tool definitions (the artifact was authored for Claude, by Claude, and is now reviewed by Claude with shared distributional assumptions), OR
-- target's resolved absolute path is inside `~/.claude/skills/` or any plugin's skills directory (any reviewer — the artifact is part of Claude's own skill ecosystem).
+**High-signal circularity (suggest blindspot) — artifact-driven, reviewer-agnostic:**
+
+The trigger is the **nature of the artifact**, not the chosen reviewer. A `SKILL.md` reviewed by `critical-code-reviewer` is just as circular as one reviewed by `skill-adversary`: Claude's distributional priors apply regardless of which reviewer formats the critique.
+
+Match any of:
+
+- target filename is `SKILL.md`, or the target directory contains one at top level (reason: "target is a SKILL.md — Claude interprets its content at runtime"), OR
+- target is a `*.md` file under any `agents/` directory at any depth (reason: "target is a Claude Code agent definition — Claude interprets its content at runtime"), OR
+- target's resolved absolute path is inside `~/.claude/` or any plugin install directory — cache (`~/.claude/plugins/cache/...`) or marketplace install (reason: "target is inside Claude's skill/plugin ecosystem"), OR
+- target declares MCP tool definitions Claude reads at runtime — tool name + description schemas, typically in `tools/*.md`, `tools.json`, or an MCP server's tool registration code (reason: "target defines MCP tool descriptions Claude interprets at runtime").
 
 If none of these apply, skip this section silently — proceed to "Detect deployment context".
 

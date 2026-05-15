@@ -10,7 +10,7 @@
   "plugins": [
     {
       "name": "audit",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "description": "Skills for code, skill, and MCP review workflows: orchestrated walkthroughs, full-project audits, adversarial critique, and circularity-aware cross-model review.",
       "source": "./",
       "strict": false,
