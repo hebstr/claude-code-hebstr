@@ -16,6 +16,7 @@ claude plugin install workflow@hebstr
 | [`write`](./write/) | `/workflow:write` | Strip AI writing patterns from prose and rewrite it to sound human. Routes to a French or English reference based on the text being edited. Includes a bilingual review mode (FR↔EN parity, typography, faux amis). |
 | [`continue`](./continue/) | `/workflow:continue` | Flush durable facts to memory, update `.claude/PLAN.md`, and print a minimal continuation prompt. No handoff document is written — PLAN.md and memory are the authoritative stores. |
 | [`reco`](./reco/) | `/workflow:reco` | Deep-mode recommendation backed by external sources. Spawns parallel agents to research official documentation (WebFetch) and community practice (WebSearch), then synthesizes a structured recommendation with verified citations. Light-mode recommendations (ending a choice-presenting reply with your own pick) live in CLAUDE.md as a communication rule, not in this skill. |
+| [`doc-structure`](./doc-structure/) | `/workflow:doc-structure` | **WIP MVP.** Audit project documentation layout (CLAUDE.md vs README.md), propose verbatim migrations of misplaced prose, and update the CLAUDE.md index. Adapted from solatis/claude-config:doc-sync. Convention details to refine on first real usage. |
 
 ## What it does
 
@@ -26,6 +27,8 @@ claude plugin install workflow@hebstr
 `/workflow:continue` runs only when the user explicitly types `/workflow:continue`. It writes durable facts from the session to memory, updates `.claude/PLAN.md` (creating it only if absent and the session had a multi-step task), and prints a minimal continuation prompt directly — no file is written for the prompt. The prompt adapts to what was actually done: it lists written memory files by name and includes PLAN.md references only when PLAN.md was written or updated.
 
 `/workflow:reco` runs only when the user explicitly types `/workflow:reco`. It spawns two parallel agents (official documentation via WebFetch, community practice via WebSearch), then produces a structured output (my take, tradeoffs, official docs, community, final recommendation). URLs are verified before being cited. Disagreement between sources is surfaced, not papered over. Use it when external grounding matters; the lighter "what do you recommend?" reflex is already handled by the CLAUDE.md communication rule.
+
+`/workflow:doc-structure` is a WIP MVP captured from the 2026-05-16 audit of `solatis/claude-config:doc-sync`. It walks a 5-phase workflow (Discovery, Audit, Migration, Index updates, Verification) to classify documentation content as HOW (operational, belongs in CLAUDE.md) or WHY (architectural, belongs in README.md), then proposes verbatim moves with per-file approval. The convention is intentionally underspecified until the skill is exercised on a real data project, R package, or Quarto book; tighten and audit (via `audit:skill-adversary`) after 1-2 real usages.
 
 All skills are user-invocable only; none auto-triggers.
 

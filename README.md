@@ -39,6 +39,7 @@ Project workflow automation: file consistency sweeps, cross-repo synchronization
 | [`write`](./workflow/write/) | Strip AI writing patterns from prose and rewrite it to sound human. Routes to a French or English reference based on the text being edited. Includes a bilingual review mode (FR↔EN parity, typography, faux amis) |
 | [`continue`](./workflow/continue/) | Flush durable facts to memory, update `.claude/PLAN.md`, and print a minimal continuation prompt. No handoff document is written — PLAN.md and memory are the authoritative stores |
 | [`reco`](./workflow/reco/) | Deep-mode recommendation backed by external sources. Parallel agents research official docs (WebFetch) and community practice (WebSearch), then synthesize a structured recommendation with verified citations |
+| [`doc-structure`](./workflow/doc-structure/) | **WIP MVP.** Audit project documentation layout (CLAUDE.md vs README.md), propose verbatim migrations of misplaced prose, and update the CLAUDE.md index. Adapted from solatis/claude-config:doc-sync |
 
 ## Requirements
 
