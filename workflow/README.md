@@ -16,7 +16,6 @@ claude plugin install workflow@hebstr
 | [`write`](./write/) | `/workflow:write` | Strip AI writing patterns from prose and rewrite it to sound human. Routes to a French or English reference based on the text being edited. Includes a bilingual review mode (FR↔EN parity, typography, faux amis). |
 | [`continue`](./continue/) | `/workflow:continue` | Flush durable facts to memory, update `.claude/PLAN.md`, and print a minimal continuation prompt. No handoff document is written — PLAN.md and memory are the authoritative stores. |
 | [`reco`](./reco/) | `/workflow:reco` | Deep-mode recommendation backed by external sources. Spawns parallel agents to research official documentation (WebFetch) and community practice (WebSearch), then synthesizes a structured recommendation with verified citations. Light-mode recommendations (ending a choice-presenting reply with your own pick) live in CLAUDE.md as a communication rule, not in this skill. |
-| [`history-analyze`](./history-analyze/) | `/workflow:history-analyze` or natural language ("what do I type too much", "missing aliases", "shell efficiency") | Analyze `~/.bash_history` via a local sanitizer (trust boundary) for repeated patterns, missing aliases, recurring typos, and tool-upgrade opportunities. Proposes concrete additions to `~/dotfiles/bash/` after explicit per-finding approval. Adapted from vsbuffalo/dotfiles. |
 
 ## What it does
 
@@ -28,7 +27,7 @@ claude plugin install workflow@hebstr
 
 `/workflow:reco` runs only when the user explicitly types `/workflow:reco`. It spawns two parallel agents (official documentation via WebFetch, community practice via WebSearch), then produces a structured output (my take, tradeoffs, official docs, community, final recommendation). URLs are verified before being cited. Disagreement between sources is surfaced, not papered over. Use it when external grounding matters; the lighter "what do you recommend?" reflex is already handled by the CLAUDE.md communication rule.
 
-All four skills are user-invocable only; none auto-triggers.
+All skills are user-invocable only; none auto-triggers.
 
 ## Requirements
 

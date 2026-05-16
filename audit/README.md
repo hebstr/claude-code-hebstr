@@ -17,7 +17,6 @@ claude plugin install audit@hebstr
 | [`blindspot`](./blindspot/) | `/blindspot` | Circularity-aware orchestrator. Detects when an audit skill is about to review an artifact that shares its codebase, prompts, or model family, then injects cross-model judging via OpenRouter and convergence analysis. Explicit-invocation only. |
 | [`skill-adversary`](./skill-adversary/) | natural language ("audit this skill", "find flaws in `<skill>`") | Adversarial critic for Claude Code skills. Reviews a skill's full directory and reports trigger edge cases (false positives and negatives), instruction ambiguities, contradictions, cross-file coherence issues, and gaps. |
 | [`mcp-adversary`](./mcp-adversary/) | natural language ("review my MCP server", "audit these tool descriptions") | Adversarial critic for MCP servers. Reviews tool descriptions, parameter schemas, and implementation code for inter-tool discrimination issues, schema anti-patterns, semantic drift between description and behavior, and undocumented workflow dependencies. |
-| [`model-extract`](./model-extract/) | `/audit:model-extract <path>` or natural language ("extract the model", "reverse-engineer this Stan code") | Reverse-engineer a statistical or simulation model codebase into a formal specification: math, observation model, likelihood and priors, inference procedure, and an explicit list of ambiguities and red flags. Separates observed/inferred/speculative claims with evidence anchors. |
 
 ## How the skills compose
 
