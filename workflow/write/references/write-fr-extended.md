@@ -314,7 +314,7 @@ Si fragments : minuscule en tête, point-virgule entre items, point seulement à
 > - écriture journalisée ;
 > - code de statut retourné.
 
-### Tics IA secondaires (17 tics complémentaires)
+### Tics IA secondaires (20 tics complémentaires)
 
 Ces tics complètent les 12 tics du core. Plus rares, scopés à un registre, ou moins immédiatement reconnaissables.
 
@@ -385,6 +385,18 @@ Ces tics complètent les 12 tics du core. Plus rares, scopés à un registre, ou
 17. **« Le caractère X de Y ».** Calque administratif pour « la X-té de Y » ou « Y X ».
     > NO: L'ANSSI prévient du caractère rapide de l'évolution des usages.
     > OK: L'ANSSI prévient que les usages évoluent vite.
+
+18. **« C'est ça X. »** Démonstratif qui mime l'emphase, n'ajoute rien à ce qui précède.
+    > NO: C'est ça le vrai problème. / C'est ça le levier. / C'est ça qui casse tout.
+    > OK: Énonce le problème ou le levier directement.
+
+19. **Refermer un paragraphe sur sa propre conclusion.** Reformuler en fin de paragraphe ce que les phrases précédentes ont déjà établi.
+    > NO: …[paragraphe]… Ce qu'il faut retenir : … / Autrement dit, … / Au fond, …
+    > OK: Termine sur la dernière phrase substantielle. Le lecteur vient de lire le paragraphe.
+
+20. **Pronom orphelin après édition.** Après une coupe, « il », « ce », « cela », « celui-ci » perd son antécédent.
+    > NO: « L'interface accepte les listes de colonnes. Il gère aussi la coercion. » (le paragraphe au-dessus parlait du « préprocesseur », coupé depuis : « il » devient flottant.)
+    > OK: Relis chaque pronom après une coupe. Si tu ne peux pas pointer son antécédent dans les une à deux phrases précédentes, remplace par le nom ou restructure.
 
 ### Pléonasmes — table complète
 

@@ -1,0 +1,3 @@
+- skill-adversary workflow:history-analyse
+- skill-adversary audit:model-extract
+- lire readme audit et workflow

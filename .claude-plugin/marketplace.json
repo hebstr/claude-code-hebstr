@@ -18,7 +18,8 @@
         "./audit/sweep",
         "./audit/blindspot",
         "./audit/skill-adversary",
-        "./audit/mcp-adversary"
+        "./audit/mcp-adversary",
+        "./audit/model-extract"
       ]
     },
     {
@@ -30,7 +31,8 @@
         "./workflow/sync",
         "./workflow/write",
         "./workflow/continue",
-        "./workflow/reco"
+        "./workflow/reco",
+        "./workflow/history-analyze"
       ]
     }
   ]

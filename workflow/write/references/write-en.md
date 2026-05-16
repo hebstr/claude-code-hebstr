@@ -124,6 +124,10 @@ Examples, not exhaustive -- any construction that performs insight rather than d
 > NO: "the supervision paradox" / "the acceleration trap" / "workload creep"
 > OK: Describe the thing directly. Don't name it as if it's an established term.
 
+**"That's X" labeling**: pseudo-emphasis via demonstrative pronoun:
+> NO: "That's the real issue." / "That's leverage." / "That's where it breaks."
+> OK: State the issue or leverage directly. The previous sentence already carries it.
+
 ### Paragraph & Composition Patterns to Avoid
 
 **Short punchy fragments as paragraphs:**
@@ -162,6 +166,14 @@ Examples, not exhaustive -- any construction that performs insight rather than d
 > NO: "It's worth noting that this approach has limitations." / "Notably," / "Importantly,"
 > OK: Say the thing directly. Skip the announcement.
 
+**Bookend summaries**: restating the paragraph's point at its end:
+> NO: "...[paragraph]... It's also worth noting that..." / "What this means is..." / "In other words, ..."
+> OK: End on the last substantive sentence. The reader just read the paragraph.
+
+**Orphan pronouns**: after an edit, "it" / "this" / "they" loses its antecedent:
+> NO: "The interface accepts column lists. It also handles coercion." (Cut paragraph above removed the noun "preprocessor"; "it" now dangles.)
+> OK: Re-read each pronoun after any edit. If you can't point to its antecedent in the previous sentence or two, replace with the noun or restructure.
+
 ### Quick Checks Before Delivering Prose
 
 - Any empty intensifier adverb (from the list above)? Kill it. Meaning-bearing adverbs stay.
@@ -176,6 +188,9 @@ Examples, not exhaustive -- any construction that performs insight rather than d
 - Meta-joiners ("The rest of this essay...")? Delete. Exception: a single TL;DR closing sentence that orients readers to the structure ahead is navigation, not filler. Keep it.
 - Any bullet starting with bold label? Reconsider the format.
 - Any "In conclusion" or "To sum up"? Cut it.
+- Any "That's X" labeling sentence? Cut it, the prior content already carries the weight.
+- Paragraph ends with "It's also worth noting" / "What this means is" / "In other words"? Drop the bookend.
+- Any pronoun ("it", "this", "they") whose antecedent disappeared after an edit? Replace with the noun or restructure.
 - Any emoji? Remove it.
 
 ---
