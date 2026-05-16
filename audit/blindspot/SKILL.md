@@ -34,11 +34,11 @@ countermeasures: cross-model judging via OpenRouter, and a transparency block in
 ```
 
 - `<target-path>` (positional, required): path to the artifact being reviewed
-- `--reviewer <audit-skill>` (flag, optional): the audit skill to run. Default: `critical-code-reviewer`. Supported: `skill-adversary`, `mcp-adversary`, `sweep`, `critical-code-reviewer`, or any review skill.
+- `--reviewer <audit-skill>` (flag, optional): the audit skill to run. No silent default — when omitted, the reviewer is discovered at runtime, suggested based on the target type, and confirmed with the user (see "Reviewer selection" below). The set of available reviewers is discovered at runtime, not hardcoded.
 
-This syntax is harmonized with `/walkthrough` so that chaining the two is frictionless: same positional `<target>` first, same `--reviewer` flag, same default reviewer.
+This syntax is harmonized with `/walkthrough` so that chaining the two is frictionless: same positional `<target>` first, same `--reviewer` flag, same reviewer-selection procedure (scan + suggest + confirm, no silent default).
 
-If invoked without `<target-path>`, ask the user for it. If `--reviewer` is omitted, default to `critical-code-reviewer` silently.
+If invoked without `<target-path>`, ask the user for it. If `--reviewer` is omitted, run the reviewer-selection procedure described in "Reviewer selection" below.
 
 ### Input validation
 
@@ -57,6 +57,57 @@ Before proceeding, validate `<target-path>`:
 
    Substitute `<target-path>` with the resolved absolute path the user passed.
 4. Reject self-invocation — would create infinite recursion. Resolve `--reviewer` to a concrete `SKILL.md` path using the same runtime resolution procedure as Phase 0 Path overlap (env shortcut → installed_plugins.json → `~/.claude/skills/`). If the resolved path's directory matches blindspot's own directory (compare via `realpath` on both sides), reject the invocation regardless of how the user spelled the argument (literal `blindspot`, absolute path, relative path, or symlink). Report the error and suggest using a different audit skill (e.g., `--reviewer skill-adversary`). Also reject if `--reviewer` resolves to a wrapper skill that, by its own SKILL.md content, would re-invoke blindspot internally (best-effort check: grep the resolved SKILL.md for `/blindspot` or `audit:blindspot` invocations; if found, refuse and require the user to pass the wrapper's underlying audit skill directly).
+
+## Reviewer selection
+
+When `--reviewer` is omitted, the reviewer is discovered at runtime, suggested based on the target type, and confirmed with the user. Never silently default.
+
+This procedure mirrors `/walkthrough`'s orchestrator (see `audit/walkthrough/agents/orchestrator.md` §"Reviewer selection") and reuses its scanning script directly. Any divergence in Steps 1–2 (scanning, validation) should be treated as a bug; the Step 3 target-type table is intentionally extended in blindspot to cover Claude-interpreted artifacts (CLAUDE.md, agent definitions, paths under `~/.claude/`) that walkthrough does not gate on.
+
+**Step 1 — scan available reviewers.** Run the helper script from the sibling walkthrough skill:
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/audit/walkthrough/scripts/scan-reviewers.py"
+```
+
+If `$CLAUDE_PLUGIN_ROOT` is unset (dev mode, non-plugin install), resolve the script path via the same fallback procedure as Phase 0 "Resolution procedure": read `~/.claude/plugins/installed_plugins.json` for the audit plugin install path and append `audit/walkthrough/scripts/scan-reviewers.py`. If neither resolution succeeds, report the failure to the user and ask them to pass `--reviewer <name>` manually — do not invent reviewer names.
+
+The script returns JSON with `candidates`: each candidate has `name`, `category` (`code` / `skill-tool` / `unknown`), `path`, and `description_excerpt`. It excludes self-references (`walkthrough`, `blindspot`). If the script returns zero candidates, tell the user the scan found no reviewer skills installed and ask them to specify one manually (e.g. by full skill path).
+
+**Step 2 — validate `--reviewer` if provided.** If the user passed `--reviewer <name>`, check that `<name>` is in the scanned candidates list (match by `name` or by its bare suffix after `:`). If valid, use it as-is and skip steps 3–4. If invalid, list the scanned candidates back to the user and ask them to pick one. Do not auto-correct.
+
+**Step 3 — detect target type and pick the suggested category.** Apply these rules in order on the resolved target path; first match wins:
+
+| Signal on resolved target | Suggested category |
+|---|---|
+| Filename is `CLAUDE.md` or matches `*.claude.md` | `skill-tool` (Claude-interpreted instructions) |
+| Target is or contains a `SKILL.md`, or path is under `~/.claude/skills/` or `<plugin>/skills/` | `skill-tool` (skill audit) |
+| Target is an `*.md` file under any `agents/` directory at any depth | `skill-tool` (agent definition) |
+| Target's resolved absolute path is inside `~/.claude/` or any plugin install directory (cache or marketplace) | `skill-tool` (Claude-interpreted artifact) |
+| Target contains MCP tool definitions (e.g. `@mcp.tool` / `Server.tool` decorators, `mcp.json`, `mcp_server.py`, `*-mcp/` directory) | `skill-tool` (MCP audit) |
+| Target is a project root (directory containing a top-level `README` plus a manifest like `pyproject.toml`, `package.json`, `Cargo.toml`, `DESCRIPTION`, etc.) and not a single file | `code` (project-wide) |
+| Otherwise (single file, sub-tree of code, glob expansion) | `code` (focused) |
+
+Within the matched category, pick the suggested reviewer using these heuristics on the candidate names (case-insensitive substring):
+
+- `skill-tool` (instructions / skill audit / agent definition / Claude-interpreted artifact): prefer a candidate matching `skill` first, otherwise fall back to any `skill-tool` candidate.
+- `skill-tool` (MCP audit): prefer a candidate matching `mcp` first, otherwise fall back to any `skill-tool` candidate.
+- `code` (project-wide): prefer a candidate matching `full` or `project` first, otherwise fall back to any `code` candidate.
+- `code` (focused): prefer a candidate matching `critical` or `code-review` first, otherwise fall back to any `code` candidate.
+
+If multiple candidates tie within the preferred sub-rule, pick the one with the shortest `name`. If the matched category has zero candidates in the scan, fall back to the other category's best match and surface this in the rationale.
+
+**Step 4 — present the suggestion and wait.** Show the user the scanned list (grouped by category), the suggested reviewer, and a one-line rationale tying the suggestion to the detected target type. The format below is illustrative — the actual reviewer names come from the scan output, not from this template:
+
+```
+No --reviewer specified. Scanned reviewers:
+  [code]       <names from scan>
+  [skill-tool] <names from scan>
+Suggested: <chosen name> (<one-line rationale>).
+Pick a reviewer or press Enter to accept the suggestion.
+```
+
+On the user's response: empty input or explicit confirmation → use the suggested reviewer; a candidate name from the scanned list (full or bare suffix) → use that one; anything else → re-prompt with the same options. Once the choice is locked in, carry the chosen reviewer's `category` forward — it informs `ARTIFACT_TYPE` in Phase 1.
 
 ## Phase 0 — Circularity Detection
 
@@ -191,14 +242,12 @@ Your choice [1-7, Enter for default]:
 Spawn the **cross-model-judge** agent (see agents/cross-model-judge.md) in **foreground** with these inputs:
 
 - `TARGET_PATH`: the resolved `<target-path>` from invocation
-- `ARTIFACT_TYPE`: `"skill"` if target contains a SKILL.md, `"mcp-server"` if it contains MCP tool definitions, `"codebase"` otherwise
-- `AUDIT_FOCUS`: derive from the audit skill, in this order:
-  1. **Known reviewers** (built-in mapping):
-     - `skill-adversary` → `"trigger accuracy, instruction clarity, security, completeness"`
-     - `mcp-adversary` → `"tool discrimination, schema quality, discoverability"`
-     - `sweep` or `critical-code-reviewer` → `"code quality, security, architecture, test coverage"`
-  2. **Unknown reviewer**: extract the reviewer's stated focus dynamically — read the resolved reviewer `SKILL.md`'s `description:` frontmatter field, identify the audit dimensions it claims to check (e.g., look for verbs like "review", "audit", "find", followed by their objects), and join them as `"<dim1>, <dim2>, ..."`. If the description does not surface concrete dimensions, fall back to the generic `"code quality, security, correctness, completeness"`.
-  3. Never pass an empty or literal `"undefined"` value — the external model would receive `AUDIT FOCUS: ` with no focus and produce a less targeted audit.
+- `ARTIFACT_TYPE`: derived from the target-type detection in "Reviewer selection" Step 3. Map the suggested category back to the agent's expected value:
+  - `skill-tool` (skill audit) → `"skill"`
+  - `skill-tool` (MCP audit) → `"mcp-server"`
+  - `skill-tool` (Claude-interpreted instructions, agent definition, or Claude-interpreted artifact) → `"other"`
+  - `code` (project-wide or focused) → `"codebase"`
+- `AUDIT_FOCUS`: derive from the resolved reviewer's `SKILL.md`. Read its `description:` frontmatter field (or the body if the description is sparse), identify the audit dimensions it claims to check — verbs like "review", "audit", "find", followed by their objects (e.g. "trigger accuracy, instruction clarity, security, completeness" for skill-adversary; "tool discrimination, schema quality, discoverability" for mcp-adversary; "code quality, security, architecture, test coverage" for critical-code-reviewer) — and join them as `"<dim1>, <dim2>, ..."`. If the reviewer surfaces no concrete dimensions, fall back to the generic `"code quality, security, correctness, completeness"`. Never pass an empty or literal `"undefined"` value — the external model would receive `AUDIT FOCUS: ` with no focus and produce a less targeted audit.
 - `EXTERNAL_MODEL`: the model ID selected at the previous step
 
 Then spawn the original audit skill as a **second foreground Agent** (not via the Skill tool — the Skill tool would run the audit inline in the main context and exhaust the budget; the walkthrough orchestrator follows the same convention for the same reason). The Agent's prompt instructs it to read the target audit skill's `SKILL.md` and execute its procedure on `<target-path>`.
