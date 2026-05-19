@@ -1,7 +1,6 @@
 ---
 name: reco
-disable-model-invocation: true
-description: "Deep recommendation backed by external sources (official documentation + community practice + verified citations). The CLAUDE.md communication rule already covers light-mode end-of-prompt recommendations; this skill is for the heavier output. Without arguments: ask the user what they want a recommendation on. With arguments: research the topic via parallel agents (official docs via WebFetch, community practice via WebSearch), then synthesize a structured recommendation. User-invocable only via /workflow:reco."
+description: "Deep recommendation backed by external sources (official documentation + community practice + verified citations). The CLAUDE.md communication rule already covers light-mode end-of-prompt recommendations; this skill is for the heavier output. Without arguments: ask the user what they want a recommendation on. With arguments: research the topic via parallel agents (official docs via WebFetch, community practice via WebSearch), then synthesize a structured recommendation. User-invocable only via /workflow:reco; does not auto-trigger on mentions of 'recommendation', 'reco', 'recommend', 'suggest', 'advice', or French equivalents ('reco', 'recommande', 'recommandation', 'conseille', 'suggère')."
 allowed-tools: WebFetch WebSearch Agent
 ---
 
